@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/builder.css" />
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -50,8 +50,8 @@
         <div class="toolbar-group">
           <button class="btn btn-ghost btn-sm" id="loadSampleBtn">Load sample</button>
           <button class="btn btn-outline btn-sm" id="resetBtn">Reset</button>
-          <button class="btn btn-outline btn-sm" id="printBtn" title="Print or Save as PDF — sharpest text quality">🖨 Print / Save PDF</button>
-          <button class="btn btn-primary btn-sm" id="downloadBtn">⬇ Download PDF</button>
+          <button class="btn btn-outline btn-sm" id="printBtn" title="Open the browser print dialog to Save as PDF">🖨 Print</button>
+          <button class="btn btn-primary btn-sm" id="downloadBtn" title="Download a sharp, true-text vector PDF">⬇ Download PDF</button>
         </div>
       </div>
     </div>
@@ -180,7 +180,7 @@
 
       <!-- PREVIEW -->
       <div class="preview-panel">
-        <p class="preview-note">Live preview — saves automatically in this browser. Tip: for the sharpest text, use <strong>Print / Save PDF</strong> (vector quality).</p>
+        <p class="preview-note">Live preview — saves automatically in this browser. <strong>Download PDF</strong> creates a sharp, true-text (vector) file that never pixelates.</p>
         <div class="resume-scroll">
           <div id="resume" class="resume tpl-modern"><!-- rendered by JS --></div>
         </div>
