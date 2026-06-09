@@ -329,10 +329,22 @@
       title + '<div class="r-contact">' + contactHtml() + '</div></div></div>';
   }
 
+  // Build an rgba tint from a hex color. html2canvas (PDF export) does not
+  // support CSS color-mix(), so we compute the light accent tint here instead.
+  function hexToTint(hex, alpha) {
+    var h = String(hex || '#2563eb').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var r = parseInt(h.substr(0, 2), 16) || 37;
+    var g = parseInt(h.substr(2, 2), 16) || 99;
+    var b = parseInt(h.substr(4, 2), 16) || 235;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
   function render() {
     var resume = document.getElementById('resume');
     resume.className = 'resume tpl-' + prefs.template;
     resume.style.setProperty('--rf-accent', prefs.color);
+    resume.style.setProperty('--rf-accent-tint', hexToTint(prefs.color, 0.12));
 
     var tpl = prefs.template;
     if (tpl === 'sidebar') {

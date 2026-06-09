@@ -137,7 +137,7 @@
 .tpl-modern .r-photo { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .tpl-modern .r-name { color: var(--rf-accent); }
 .tpl-modern .r-section-title { color: var(--rf-accent); border-bottom: 1px solid #e2e8f0; }
-.tpl-modern .r-skill { background: color-mix(in srgb, var(--rf-accent) 12%, #fff); color: var(--rf-accent); }
+.tpl-modern .r-skill { background: var(--rf-accent-tint, #eef2ff); color: var(--rf-accent); }
 
 /* ---- Template: Classic (centered, serif) ---- */
 .tpl-classic { padding: 44px 50px; font-family: Georgia, 'Times New Roman', serif; }
@@ -166,7 +166,7 @@
 .tpl-sidebar .r-side .r-contact { flex-direction: column; gap: 7px; }
 .tpl-sidebar .r-side .r-skill { background: rgba(255,255,255,.18); color: #fff; }
 .tpl-sidebar .r-main .r-section-title { color: var(--rf-accent); border-bottom: 1px solid #e2e8f0; }
-.tpl-sidebar .r-main .r-skill { background: color-mix(in srgb, var(--rf-accent) 12%, #fff); color: var(--rf-accent); }
+.tpl-sidebar .r-main .r-skill { background: var(--rf-accent-tint, #eef2ff); color: var(--rf-accent); }
 
 /* Empty state hint inside resume */
 .r-empty { color: #cbd5e1; font-style: italic; }
