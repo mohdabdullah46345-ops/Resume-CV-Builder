@@ -180,9 +180,11 @@
   #resume, #resume * { visibility: visible !important; }
   .site-header, .builder-toolbar, .editor-panel, .site-footer, .preview-note { display: none !important; }
   #resume {
-    position: absolute; left: 0; top: 0; width: 100%; min-height: auto;
-    box-shadow: none !important; margin: 0;
+    position: absolute; left: 0; top: 0; width: 100% !important; min-height: auto !important;
+    box-shadow: none !important; margin: 0 !important; transform: none !important; border-radius: 0 !important;
   }
+  /* keep two-column sidebar template intact when printing */
+  .tpl-sidebar { grid-template-columns: 250px 1fr !important; }
   @page { size: A4; margin: 0; }
 }
 

@@ -237,6 +237,8 @@
       }
     });
     document.getElementById('downloadBtn').addEventListener('click', downloadPDF);
+    var printBtn = document.getElementById('printBtn');
+    if (printBtn) printBtn.addEventListener('click', printPDF);
   }
 
   function refreshEditor() {
@@ -363,41 +365,73 @@
   }
 
   /* ---------- PDF ---------- */
+  function fileBase() {
+    return (state.fullName || 'resume').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'resume';
+  }
+
+  // High-quality raster PDF. We clone the resume into an off-screen container
+  // forced to full A4 width (794px) so the mobile/scaled preview never affects
+  // output, then render at high resolution as a lossless PNG for crisp text.
   function downloadPDF() {
-    var el = document.getElementById('resume');
-    var name = (state.fullName || 'resume').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+    var src = document.getElementById('resume');
     var btn = document.getElementById('downloadBtn');
     var orig = btn.textContent;
 
-    if (typeof html2pdf === 'undefined') {
-      // fallback to print dialog
-      window.print();
-      return;
-    }
+    if (typeof html2pdf === 'undefined') { printPDF(); return; }
+
     btn.textContent = 'Generating…'; btn.disabled = true;
 
-    // Temporarily neutralize preview scaling for crisp output
-    var prevTransform = el.style.transform;
-    var prevMargin = el.style.margin;
-    el.style.transform = 'none';
-    el.style.margin = '0';
+    var clone = src.cloneNode(true);
+    clone.style.transform = 'none';
+    clone.style.margin = '0';
+    clone.style.width = '794px';
+    clone.style.minHeight = '1123px';
+    clone.style.boxShadow = 'none';
+    clone.style.borderRadius = '0';
+
+    var holder = document.createElement('div');
+    holder.setAttribute('aria-hidden', 'true');
+    holder.style.position = 'fixed';
+    holder.style.left = '-10000px';
+    holder.style.top = '0';
+    holder.style.width = '794px';
+    holder.style.background = '#ffffff';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+
+    // Sharpen: render at 3x (or higher on high-DPI screens), lossless PNG.
+    var scale = Math.min(4, Math.max(3, (window.devicePixelRatio || 1) * 2));
 
     var opt = {
       margin: 0,
-      filename: name + '_resume.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      filename: fileBase() + '_resume.pdf',
+      image: { type: 'png', quality: 1 },
+      html2canvas: { scale: scale, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794, scrollX: 0, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
       pagebreak: { mode: ['css', 'legacy'] }
     };
-    html2pdf().set(opt).from(el).save().then(function () {
-      el.style.transform = prevTransform; el.style.margin = prevMargin;
+
+    function cleanup() {
+      if (holder.parentNode) holder.parentNode.removeChild(holder);
       btn.textContent = orig; btn.disabled = false;
-    }).catch(function () {
-      el.style.transform = prevTransform; el.style.margin = prevMargin;
-      btn.textContent = orig; btn.disabled = false;
-      window.print();
+    }
+
+    html2pdf().set(opt).from(clone).save().then(cleanup).catch(function () {
+      cleanup();
+      printPDF();
     });
+  }
+
+  // Vector "print to PDF" — text stays perfectly sharp at any zoom and the
+  // file is small. The browser's print dialog lets the user choose "Save as PDF".
+  function printPDF() {
+    var prevTitle = document.title;
+    document.title = fileBase() + '_resume';
+    window.addEventListener('afterprint', function restore() {
+      document.title = prevTitle;
+      window.removeEventListener('afterprint', restore);
+    });
+    window.print();
   }
 
   /* ---------- init ---------- */
