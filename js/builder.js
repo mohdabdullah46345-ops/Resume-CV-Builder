@@ -399,15 +399,15 @@
     holder.appendChild(clone);
     document.body.appendChild(holder);
 
-    // Sharpen: render at 3x (or higher on high-DPI screens), lossless PNG.
-    var scale = Math.min(4, Math.max(3, (window.devicePixelRatio || 1) * 2));
-
+    // Render at 2x as a lossless PNG. 2x keeps the canvas well within the
+    // browser's maximum canvas size on every device (going higher makes the
+    // browser silently downscale the canvas, which looks pixelated).
     var opt = {
       margin: 0,
       filename: fileBase() + '_resume.pdf',
       image: { type: 'png', quality: 1 },
-      html2canvas: { scale: scale, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794, scrollX: 0, scrollY: 0 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794, scrollX: 0, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['css', 'legacy'] }
     };
 
