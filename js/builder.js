@@ -237,8 +237,6 @@
       }
     });
     document.getElementById('downloadBtn').addEventListener('click', downloadPDF);
-    var printBtn = document.getElementById('printBtn');
-    if (printBtn) printBtn.addEventListener('click', printPDF);
   }
 
   function refreshEditor() {
