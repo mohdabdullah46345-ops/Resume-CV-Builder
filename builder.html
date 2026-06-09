@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Builder — Create &amp; Download Your Resume | ResumeForge</title>
+  <meta name="description" content="Use the free ResumeForge builder to create a professional, ATS-friendly resume with live preview. Choose templates, colors, add your photo and download as PDF instantly." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://example.github.io/Resume-CV-Builder/builder.html" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/builder.css" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="index.html"><span class="brand-logo">R</span> Resume<span>Forge</span></a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><span></span></button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="builder.html">Builder</a></li>
+        <li><a href="blog.html">Blog</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="builder-wrap">
+    <!-- Toolbar -->
+    <div class="builder-toolbar">
+      <div class="container toolbar-inner">
+        <div class="toolbar-group">
+          <span class="toolbar-label">Template</span>
+          <select id="templateSelect" class="select" aria-label="Choose template">
+            <option value="modern">Modern</option>
+            <option value="classic">Classic</option>
+            <option value="minimal">Minimal</option>
+            <option value="sidebar">Sidebar</option>
+          </select>
+          <span class="toolbar-label">Color</span>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="toolbar-group">
+          <button class="btn btn-ghost btn-sm" id="loadSampleBtn">Load sample</button>
+          <button class="btn btn-outline btn-sm" id="resetBtn">Reset</button>
+          <button class="btn btn-primary btn-sm" id="downloadBtn">⬇ Download PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container builder-grid">
+      <!-- EDITOR -->
+      <div class="editor-panel" id="editor">
+
+        <!-- Personal -->
+        <div class="acc open">
+          <button class="acc-head" type="button">Personal Information
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="photo-row">
+              <img id="photoPreview" class="photo-preview" alt="Profile photo preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' fill='%23e2e8f0'/%3E%3C/svg%3E" />
+              <div style="flex:1;">
+                <label class="hint" style="font-weight:600;">Profile photo (optional)</label>
+                <input type="file" id="photoInput" accept="image/*" class="field" style="padding:6px;" />
+                <button type="button" id="removePhoto" class="btn-remove" style="width:auto;padding:4px 10px;font-size:.75rem;">Remove photo</button>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Full Name</label><input data-bind="fullName" placeholder="Jane Doe" /></div>
+              <div class="field"><label>Job Title</label><input data-bind="jobTitle" placeholder="Senior Product Designer" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Email</label><input data-bind="email" type="email" placeholder="jane@email.com" /></div>
+              <div class="field"><label>Phone</label><input data-bind="phone" placeholder="+1 555 123 4567" /></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Location</label><input data-bind="location" placeholder="New York, USA" /></div>
+              <div class="field"><label>Website / Portfolio</label><input data-bind="website" placeholder="janedoe.com" /></div>
+            </div>
+            <div class="field"><label>LinkedIn</label><input data-bind="linkedin" placeholder="linkedin.com/in/janedoe" /></div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="acc open">
+          <button class="acc-head" type="button">Professional Summary
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="field">
+              <label>Summary</label>
+              <textarea data-bind="summary" placeholder="A results-driven professional with 6+ years of experience…"></textarea>
+              <p class="hint">2–4 concise sentences highlighting your strengths and goals.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="acc">
+          <button class="acc-head" type="button">Work Experience
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div id="experienceList"></div>
+            <button class="btn-add" data-add="experience">+ Add Experience</button>
+          </div>
+        </div>
+
+        <!-- Education -->
+        <div class="acc">
+          <button class="acc-head" type="button">Education
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div id="educationList"></div>
+            <button class="btn-add" data-add="education">+ Add Education</button>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="acc">
+          <button class="acc-head" type="button">Skills
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="field">
+              <label>Skills</label>
+              <textarea data-bind="skills" placeholder="JavaScript, Figma, Leadership, Communication"></textarea>
+              <p class="chips-help">Separate each skill with a comma.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projects -->
+        <div class="acc">
+          <button class="acc-head" type="button">Projects
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div id="projectsList"></div>
+            <button class="btn-add" data-add="projects">+ Add Project</button>
+          </div>
+        </div>
+
+        <!-- Certifications -->
+        <div class="acc">
+          <button class="acc-head" type="button">Certifications
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div id="certificationsList"></div>
+            <button class="btn-add" data-add="certifications">+ Add Certification</button>
+          </div>
+        </div>
+
+        <!-- Languages -->
+        <div class="acc">
+          <button class="acc-head" type="button">Languages
+            <svg class="acc-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="acc-body">
+            <div class="field">
+              <label>Languages</label>
+              <textarea data-bind="languages" placeholder="English (Native), Spanish (Fluent)"></textarea>
+              <p class="chips-help">Separate each language with a comma.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="preview-panel">
+        <p class="preview-note">Live preview — your changes save automatically in this browser.</p>
+        <div class="resume-scroll">
+          <div id="resume" class="resume tpl-modern"><!-- rendered by JS --></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/builder.js"></script>
+</body>
+</html>

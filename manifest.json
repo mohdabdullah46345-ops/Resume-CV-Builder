@@ -1,0 +1,18 @@
+{
+  "name": "ResumeForge — Free Resume & CV Builder",
+  "short_name": "ResumeForge",
+  "description": "Free, privacy-first online resume and CV builder with live preview, ATS-friendly templates and instant PDF download.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
