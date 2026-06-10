@@ -48,7 +48,7 @@ A fast, mobile-friendly, **privacy-first** resume and CV builder that runs entir
 
 ## 🔧 Before you go live (important)
 
-Replace the placeholder URL `https://example.github.io/Resume-CV-Builder/` with your **real** GitHub Pages URL in these files:
+Replace the placeholder URL `https://quicktoolkit1.github.io/Resume-CV-Builder/` with your **real** GitHub Pages URL in these files:
 
 - `index.html`, `builder.html`, `blog.html`, and all other pages (the `<link rel="canonical">` and Open Graph tags)
 - `blog/*.html` (canonical tags)
