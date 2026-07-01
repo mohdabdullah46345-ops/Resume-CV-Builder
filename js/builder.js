@@ -329,10 +329,22 @@
       title + '<div class="r-contact">' + contactHtml() + '</div></div></div>';
   }
 
+  // Build an rgba tint from a hex color. html2canvas (PDF export) does not
+  // support CSS color-mix(), so we compute the light accent tint here instead.
+  function hexToTint(hex, alpha) {
+    var h = String(hex || '#2563eb').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    var r = parseInt(h.substr(0, 2), 16) || 37;
+    var g = parseInt(h.substr(2, 2), 16) || 99;
+    var b = parseInt(h.substr(4, 2), 16) || 235;
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+  }
+
   function render() {
     var resume = document.getElementById('resume');
     resume.className = 'resume tpl-' + prefs.template;
     resume.style.setProperty('--rf-accent', prefs.color);
+    resume.style.setProperty('--rf-accent-tint', hexToTint(prefs.color, 0.12));
 
     var tpl = prefs.template;
     if (tpl === 'sidebar') {
@@ -351,41 +363,314 @@
   }
 
   /* ---------- PDF ---------- */
-  function downloadPDF() {
-    var el = document.getElementById('resume');
-    var name = (state.fullName || 'resume').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
-    var btn = document.getElementById('downloadBtn');
-    var orig = btn.textContent;
+  function fileBase() {
+    return (state.fullName || 'resume').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'resume';
+  }
 
-    if (typeof html2pdf === 'undefined') {
-      // fallback to print dialog
-      window.print();
-      return;
-    }
+  function toRGB(hex) {
+    var h = String(hex || '#2563eb').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return [parseInt(h.substr(0, 2), 16) || 0, parseInt(h.substr(2, 2), 16) || 0, parseInt(h.substr(4, 2), 16) || 0];
+  }
+  function imgFormat(dataURL) {
+    if (/^data:image\/png/i.test(dataURL)) return 'PNG';
+    if (/^data:image\/jpe?g/i.test(dataURL)) return 'JPEG';
+    if (/^data:image\/webp/i.test(dataURL)) return 'WEBP';
+    return 'PNG';
+  }
+  function getJsPDF() {
+    if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+    if (window.jsPDF) return window.jsPDF;
+    return null;
+  }
+
+  // PRIMARY EXPORT: a true VECTOR PDF. Instead of taking a screenshot of the
+  // resume and stretching that image onto an A4 page (which pixelates), we draw
+  // the text, lines and sections directly into the PDF with jsPDF. The result
+  // contains real text, so it stays perfectly sharp at any zoom level.
+  function downloadPDF() {
+    var JsPDF = getJsPDF();
+    var btn = document.getElementById('downloadBtn');
+    if (!JsPDF) { printPDF(); return; } // safety fallback
+
+    var orig = btn.textContent;
     btn.textContent = 'Generating…'; btn.disabled = true;
 
-    // Temporarily neutralize preview scaling for crisp output
-    var prevTransform = el.style.transform;
-    var prevMargin = el.style.margin;
-    el.style.transform = 'none';
-    el.style.margin = '0';
+    try {
+      var doc = new JsPDF({ unit: 'pt', format: 'a4', compress: true });
+      var tpl = prefs.template;
+      if (tpl === 'sidebar') drawSidebar(doc);
+      else drawSingleColumn(doc, tpl);
+      doc.save(fileBase() + '_resume.pdf');
+    } catch (e) {
+      printPDF();
+    } finally {
+      btn.textContent = orig; btn.disabled = false;
+    }
+  }
 
-    var opt = {
-      margin: 0,
-      filename: name + '_resume.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    };
-    html2pdf().set(opt).from(el).save().then(function () {
-      el.style.transform = prevTransform; el.style.margin = prevMargin;
-      btn.textContent = orig; btn.disabled = false;
-    }).catch(function () {
-      el.style.transform = prevTransform; el.style.margin = prevMargin;
-      btn.textContent = orig; btn.disabled = false;
-      window.print();
+  // ----- single-column vector layout (Modern / Classic / Minimal) -----
+  function drawSingleColumn(doc, tpl) {
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var L = 48, R = 48, top = 50, bottom = 48;
+    var contentW = pageW - L - R;
+
+    var serif = (tpl === 'classic');
+    var font = serif ? 'times' : 'helvetica';
+    var accent = prefs.color;
+    var aRGB = toRGB(accent);
+    var nameRGB = (tpl === 'classic') ? [17, 17, 17] : aRGB;
+    var titleRGB = (tpl === 'classic') ? [17, 17, 17] : aRGB;
+    var centered = (tpl === 'classic');
+    var showPhoto = (tpl === 'modern') && !!prefs.photo;
+
+    var C = { y: top };
+    function ens(h) { if (C.y + h > pageH - bottom) { doc.addPage(); C.y = top; } }
+
+    var name = state.fullName || 'Your Name';
+
+    // ---- header ----
+    if (centered) {
+      doc.setFont(font, 'bold'); doc.setFontSize(24); doc.setTextColor(nameRGB[0], nameRGB[1], nameRGB[2]);
+      doc.text(name, pageW / 2, C.y, { align: 'center', baseline: 'top' }); C.y += 28;
+      if (state.jobTitle) {
+        doc.setFont(font, 'normal'); doc.setFontSize(12.5); doc.setTextColor(70, 70, 70);
+        doc.text(state.jobTitle, pageW / 2, C.y, { align: 'center', baseline: 'top' }); C.y += 18;
+      }
+      var ci = contactArr();
+      if (ci.length) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9.5); doc.setTextColor(90, 90, 90);
+        var cl = doc.splitTextToSize(ci.join('   \u2022   '), contentW);
+        doc.text(cl, pageW / 2, C.y, { align: 'center', baseline: 'top' }); C.y += cl.length * 12;
+      }
+      C.y += 6;
+      doc.setDrawColor(34, 34, 34); doc.setLineWidth(1.2);
+      doc.line(L, C.y, L + contentW, C.y); C.y += 16;
+    } else {
+      var photoW = 0;
+      if (showPhoto) {
+        try { doc.addImage(prefs.photo, imgFormat(prefs.photo), L + contentW - 70, C.y, 70, 70); photoW = 84; } catch (e) {}
+      }
+      var tw = contentW - photoW;
+      doc.setFont(font, 'bold'); doc.setFontSize(24); doc.setTextColor(nameRGB[0], nameRGB[1], nameRGB[2]);
+      var nameLines = doc.splitTextToSize(name, tw);
+      doc.text(nameLines, L, C.y, { baseline: 'top' });
+      var hy = C.y + nameLines.length * 26;
+      if (state.jobTitle) {
+        doc.setFont(font, 'normal'); doc.setFontSize(12.5); doc.setTextColor(70, 70, 70);
+        doc.text(state.jobTitle, L, hy, { baseline: 'top' }); hy += 18;
+      }
+      var items = contactArr();
+      if (items.length) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9.5); doc.setTextColor(90, 90, 90);
+        var ls = doc.splitTextToSize(items.join('   \u2022   '), tw);
+        doc.text(ls, L, hy, { baseline: 'top' }); hy += ls.length * 12;
+      }
+      C.y = Math.max(hy, showPhoto ? C.y + 72 : hy) + 6;
+      if (tpl === 'modern') {
+        doc.setDrawColor(aRGB[0], aRGB[1], aRGB[2]); doc.setLineWidth(2);
+        doc.line(L, C.y, L + contentW, C.y); C.y += 16;
+      } else if (tpl === 'minimal') {
+        C.y += 4;
+      } else {
+        doc.setDrawColor(200, 200, 200); doc.setLineWidth(0.8);
+        doc.line(L, C.y, L + contentW, C.y); C.y += 14;
+      }
+    }
+
+    function sectionTitle(t) {
+      ens(34);
+      doc.setFont(font, 'bold'); doc.setFontSize(11); doc.setTextColor(titleRGB[0], titleRGB[1], titleRGB[2]);
+      doc.text(t.toUpperCase(), L, C.y, { baseline: 'top' }); C.y += 14;
+      if (tpl === 'minimal') { C.y += 2; }
+      else if (tpl === 'classic') { doc.setDrawColor(150, 150, 150); doc.setLineWidth(0.6); doc.line(L, C.y, L + contentW, C.y); C.y += 10; }
+      else { doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.7); doc.line(L, C.y, L + contentW, C.y); C.y += 10; }
+      doc.setTextColor(45, 45, 45);
+    }
+
+    // ---- sections (match preview order) ----
+    if (state.summary) {
+      sectionTitle('Summary');
+      doc.setFont(font, 'normal'); doc.setFontSize(10.2); doc.setTextColor(55, 55, 55);
+      var sm = doc.splitTextToSize(state.summary, contentW);
+      ens(sm.length * 13); doc.text(sm, L, C.y, { baseline: 'top' }); C.y += sm.length * 13 + 8;
+    }
+    if (state.experience.length) { sectionTitle('Experience'); drawEntries(doc, C, ens, L, contentW, font, serif, state.experience, 'role', 'company'); }
+    if (state.education.length) { sectionTitle('Education'); drawEntries(doc, C, ens, L, contentW, font, serif, state.education, 'degree', 'school'); }
+    drawTagList(doc, C, ens, L, contentW, font, sectionTitle, 'Skills', state.skills);
+    if (state.projects.length) { sectionTitle('Projects'); drawProjects(doc, C, ens, L, contentW, font, serif); }
+    if (state.certifications.length) { sectionTitle('Certifications'); drawCerts(doc, C, ens, L, contentW, font, serif); }
+    drawTagList(doc, C, ens, L, contentW, font, sectionTitle, 'Languages', state.languages);
+  }
+
+  // experience / education entries
+  function drawEntries(doc, C, ens, x, w, font, serif, arr, titleKey, subKey) {
+    arr.forEach(function (e) {
+      ens(40);
+      var dateStr = (e.start || '') + (e.end ? ' \u2013 ' + e.end : '');
+      doc.setFont(font, 'bold'); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+      var roleLines = doc.splitTextToSize(e[titleKey] || '', w - 110);
+      doc.text(roleLines, x, C.y, { baseline: 'top' });
+      if (dateStr) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+        doc.text(dateStr, x + w, C.y, { align: 'right', baseline: 'top' });
+      }
+      C.y += roleLines.length * 13;
+      var sub = (e[subKey] || '') + (e.location ? '  \u00b7  ' + e.location : '');
+      if (sub.trim()) {
+        doc.setFont(font, serif ? 'italic' : 'normal'); doc.setFontSize(10); doc.setTextColor(80, 80, 80);
+        var sl = doc.splitTextToSize(sub, w); doc.text(sl, x, C.y, { baseline: 'top' }); C.y += sl.length * 12;
+      }
+      if (e.desc) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9.7); doc.setTextColor(55, 55, 55);
+        e.desc.split('\n').map(function (s) { return s.trim(); }).filter(Boolean).forEach(function (line) {
+          var wr = doc.splitTextToSize(line, w - 14); ens(wr.length * 12 + 2);
+          doc.text('\u2022', x + 2, C.y, { baseline: 'top' });
+          doc.text(wr, x + 14, C.y, { baseline: 'top' }); C.y += wr.length * 12;
+        });
+      }
+      C.y += 9;
     });
+  }
+
+  function drawProjects(doc, C, ens, x, w, font, serif) {
+    state.projects.forEach(function (p) {
+      ens(30);
+      doc.setFont(font, 'bold'); doc.setFontSize(11); doc.setTextColor(30, 30, 30);
+      var nameLines = doc.splitTextToSize(p.name || '', w - 110);
+      doc.text(nameLines, x, C.y, { baseline: 'top' });
+      if (p.link) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+        doc.text(p.link, x + w, C.y, { align: 'right', baseline: 'top' });
+      }
+      C.y += nameLines.length * 13;
+      if (p.desc) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9.7); doc.setTextColor(55, 55, 55);
+        var dl = doc.splitTextToSize(p.desc, w); ens(dl.length * 12); doc.text(dl, x, C.y, { baseline: 'top' }); C.y += dl.length * 12;
+      }
+      C.y += 9;
+    });
+  }
+
+  function drawCerts(doc, C, ens, x, w, font, serif) {
+    state.certifications.forEach(function (c) {
+      ens(26);
+      doc.setFont(font, 'bold'); doc.setFontSize(10.6); doc.setTextColor(30, 30, 30);
+      var nm = doc.splitTextToSize(c.name || '', w - 80);
+      doc.text(nm, x, C.y, { baseline: 'top' });
+      if (c.year) {
+        doc.setFont(font, 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110);
+        doc.text(c.year, x + w, C.y, { align: 'right', baseline: 'top' });
+      }
+      C.y += nm.length * 12.5;
+      if (c.issuer) {
+        doc.setFont(font, serif ? 'italic' : 'normal'); doc.setFontSize(9.5); doc.setTextColor(80, 80, 80);
+        doc.text(c.issuer, x, C.y, { baseline: 'top' }); C.y += 12;
+      }
+      C.y += 7;
+    });
+  }
+
+  function drawTagList(doc, C, ens, x, w, font, sectionTitle, label, raw) {
+    var arr = listToArr(raw);
+    if (!arr.length) return;
+    sectionTitle(label);
+    doc.setFont(font, 'normal'); doc.setFontSize(10); doc.setTextColor(55, 55, 55);
+    var lines = doc.splitTextToSize(arr.join('   \u00b7   '), w);
+    ens(lines.length * 13); doc.text(lines, x, C.y, { baseline: 'top' }); C.y += lines.length * 13 + 8;
+  }
+
+  // ----- two-column vector layout (Sidebar template) -----
+  function drawSidebar(doc) {
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var accent = prefs.color, aRGB = toRGB(accent);
+    var sideW = 200, pad = 22;
+    var font = 'helvetica';
+
+    function sideBg() { doc.setFillColor(aRGB[0], aRGB[1], aRGB[2]); doc.rect(0, 0, sideW, pageH, 'F'); }
+    sideBg();
+
+    // ----- left column -----
+    var lx = pad, lw = sideW - pad * 2, ly = 40;
+    if (prefs.photo) {
+      try { var pw = 100; doc.addImage(prefs.photo, imgFormat(prefs.photo), sideW / 2 - pw / 2, ly, pw, pw); ly += pw + 16; } catch (e) {}
+    }
+    doc.setFont(font, 'bold'); doc.setFontSize(18); doc.setTextColor(255, 255, 255);
+    var nm = doc.splitTextToSize(state.fullName || 'Your Name', lw);
+    doc.text(nm, sideW / 2, ly, { align: 'center', baseline: 'top' }); ly += nm.length * 21;
+    if (state.jobTitle) {
+      doc.setFont(font, 'normal'); doc.setFontSize(10.5); doc.setTextColor(238, 242, 255);
+      var jt = doc.splitTextToSize(state.jobTitle, lw);
+      doc.text(jt, sideW / 2, ly, { align: 'center', baseline: 'top' }); ly += jt.length * 13;
+    }
+    ly += 12;
+
+    function sideTitle(t) {
+      doc.setFont(font, 'bold'); doc.setFontSize(10.5); doc.setTextColor(255, 255, 255);
+      doc.text(t.toUpperCase(), lx, ly, { baseline: 'top' }); ly += 13;
+      doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5); doc.line(lx, ly, lx + lw, ly); ly += 8;
+    }
+    function sideLines(arr, bullet) {
+      doc.setFont(font, 'normal'); doc.setFontSize(9); doc.setTextColor(240, 244, 255);
+      arr.forEach(function (it) {
+        var l = doc.splitTextToSize((bullet ? '\u2022  ' : '') + it, lw);
+        doc.text(l, lx, ly, { baseline: 'top' }); ly += l.length * 11 + 2;
+      });
+      ly += 8;
+    }
+    var ci = contactArr();
+    if (ci.length) { sideTitle('Contact'); sideLines(ci, false); }
+    var sk = listToArr(state.skills);
+    if (sk.length) { sideTitle('Skills'); sideLines(sk, true); }
+    var lg = listToArr(state.languages);
+    if (lg.length) { sideTitle('Languages'); sideLines(lg, true); }
+
+    // ----- right column -----
+    var rx = sideW + 26, rw = pageW - rx - 40;
+    var C = { y: 44 };
+    function ens(h) { if (C.y + h > pageH - 40) { doc.addPage(); sideBg(); C.y = 44; } }
+    function rSection(t) {
+      ens(34);
+      doc.setFont(font, 'bold'); doc.setFontSize(11.5); doc.setTextColor(aRGB[0], aRGB[1], aRGB[2]);
+      doc.text(t.toUpperCase(), rx, C.y, { baseline: 'top' }); C.y += 14;
+      doc.setDrawColor(226, 232, 240); doc.setLineWidth(0.7); doc.line(rx, C.y, rx + rw, C.y); C.y += 10;
+      doc.setTextColor(45, 45, 45);
+    }
+
+    if (state.summary) {
+      rSection('Summary');
+      doc.setFont(font, 'normal'); doc.setFontSize(10.2); doc.setTextColor(55, 55, 55);
+      var sm = doc.splitTextToSize(state.summary, rw);
+      ens(sm.length * 13); doc.text(sm, rx, C.y, { baseline: 'top' }); C.y += sm.length * 13 + 8;
+    }
+    if (state.experience.length) { rSection('Experience'); drawEntries(doc, C, ens, rx, rw, font, false, state.experience, 'role', 'company'); }
+    if (state.education.length) { rSection('Education'); drawEntries(doc, C, ens, rx, rw, font, false, state.education, 'degree', 'school'); }
+    if (state.projects.length) { rSection('Projects'); drawProjects(doc, C, ens, rx, rw, font, false); }
+    if (state.certifications.length) { rSection('Certifications'); drawCerts(doc, C, ens, rx, rw, font, false); }
+  }
+
+  // plain-text contact list (no emoji — keeps PDF fonts clean)
+  function contactArr() {
+    var a = [];
+    if (state.email) a.push(state.email);
+    if (state.phone) a.push(state.phone);
+    if (state.location) a.push(state.location);
+    if (state.website) a.push(state.website);
+    if (state.linkedin) a.push(state.linkedin);
+    return a;
+  }
+
+  // Vector "print to PDF" — uses the browser's native print to Save as PDF.
+  function printPDF() {
+    var prevTitle = document.title;
+    document.title = fileBase() + '_resume';
+    window.addEventListener('afterprint', function restore() {
+      document.title = prevTitle;
+      window.removeEventListener('afterprint', restore);
+    });
+    window.print();
   }
 
   /* ---------- init ---------- */
