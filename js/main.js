@@ -51,9 +51,9 @@
       var msg = encodeURIComponent(document.getElementById('cf-message').value);
       var subject = encodeURIComponent('ResumeForge Contact from ' + decodeURIComponent(name));
       var body = 'Name: ' + name + '%0D%0AEmail: ' + email + '%0D%0A%0D%0A' + msg;
-      window.location.href = 'mailto:hello@resumeforge.example?subject=' + subject + '&body=' + body;
+      window.location.href = 'mailto:mohdabdullah46345@gmail.com?subject=' + subject + '&body=' + body;
       if (status) {
-        status.textContent = 'Opening your email app… If nothing happens, email us directly at hello@resumeforge.example';
+        status.textContent = 'Opening your email app… If nothing happens, email us directly at mohdabdullah46345@gmail.com';
         status.style.color = 'var(--success)';
       }
     });

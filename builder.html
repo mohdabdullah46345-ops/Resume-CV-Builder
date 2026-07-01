@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#2563eb" />
   <title>Resume Builder — Create &amp; Download Your Resume | ResumeForge</title>
   <meta name="description" content="Use the free ResumeForge builder to create a professional, ATS-friendly resume with live preview. Choose templates, colors, add your photo and download as PDF instantly." />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://quicktoolkit1.github.io/Resume-CV-Builder/builder.html" />
+  <link rel="canonical" href="https://mohdabdullah46345-ops.github.io/Resume-CV-Builder/builder.html" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/builder.css" />
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=5" />
+  <link rel="stylesheet" href="css/builder.css?v=5" />
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -49,7 +50,7 @@
         <div class="toolbar-group">
           <button class="btn btn-ghost btn-sm" id="loadSampleBtn">Load sample</button>
           <button class="btn btn-outline btn-sm" id="resetBtn">Reset</button>
-          <button class="btn btn-primary btn-sm" id="downloadBtn">⬇ Download PDF</button>
+          <button class="btn btn-primary btn-sm" id="downloadBtn" title="Download a sharp, true-text vector PDF">⬇ Download PDF</button>
         </div>
       </div>
     </div>
@@ -178,7 +179,7 @@
 
       <!-- PREVIEW -->
       <div class="preview-panel">
-        <p class="preview-note">Live preview — your changes save automatically in this browser.</p>
+        <p class="preview-note">Live preview — saves automatically in this browser. <strong>Download PDF</strong> creates a sharp, true-text (vector) file that never pixelates.</p>
         <div class="resume-scroll">
           <div id="resume" class="resume tpl-modern"><!-- rendered by JS --></div>
         </div>
@@ -186,7 +187,7 @@
     </div>
   </div>
 
-  <script src="js/main.js"></script>
-  <script src="js/builder.js"></script>
+  <script src="js/main.js?v=5"></script>
+  <script src="js/builder.js?v=5"></script>
 </body>
 </html>

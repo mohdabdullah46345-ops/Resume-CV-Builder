@@ -44,18 +44,16 @@ A fast, mobile-friendly, **privacy-first** resume and CV builder that runs entir
 3. Under **Build and deployment → Source**, choose **Deploy from a branch**.
 4. Select the `main` branch and the `/ (root)` folder, then **Save**.
 5. After a minute, your site will be live at:
-   `https://<your-username>.github.io/Resume-CV-Builder/`
+   `https://mohdabdullah46345-ops.github.io/Resume-CV-Builder/`
 
-## 🔧 Before you go live (important)
+## 🔧 Configuration (already set)
 
-Replace the placeholder URL `https://quicktoolkit1.github.io/Resume-CV-Builder/` with your **real** GitHub Pages URL in these files:
+This site is pre-configured for **Abdullah's** GitHub Pages deployment:
 
-- `index.html`, `builder.html`, `blog.html`, and all other pages (the `<link rel="canonical">` and Open Graph tags)
-- `blog/*.html` (canonical tags)
-- `robots.txt` (the `Sitemap:` line)
-- `sitemap.xml` (every `<loc>`)
+- Live URL: `https://mohdabdullah46345-ops.github.io/Resume-CV-Builder/` (used in canonical tags, Open Graph, `sitemap.xml`, `robots.txt`)
+- Contact email: `mohdabdullah46345@gmail.com` (used in `contact.html` and `js/main.js`)
 
-Also update the placeholder contact email `hello@resumeforge.example` in `contact.html` and `js/main.js`.
+If you ever move the site to a custom domain, update the URL above in the same files.
 
 ## 🔎 Google Search Console
 

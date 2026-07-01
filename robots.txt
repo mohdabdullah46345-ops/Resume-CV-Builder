@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://quicktoolkit1.github.io/Resume-CV-Builder/sitemap.xml
+Sitemap: https://mohdabdullah46345-ops.github.io/Resume-CV-Builder/sitemap.xml
